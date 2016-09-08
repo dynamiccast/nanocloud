@@ -255,6 +255,24 @@ class AWSDriver extends Driver {
                   return reject(err);
                 }
 
+                const ip = server.addresses.public[0];
+                const type = this.name();
+
+                ConfigService.get('awsMachineUsername', 'plazaPort', 'awsFlavor')
+                  .then((config) => {
+                    return Machine.create({
+                      id: server.id,
+                      name: server.name,
+                      type: type,
+                      flavor: config.awsFlavor,
+                      ip: ip,
+                      username: config.awsMachineUsername,
+                      password: null,
+                      domain: '',
+                      plazaport: config.plazaPort,
+                      status: 'booting'
+                    });
+                  });
                 if (image.password === null) {
                   return this._client.ec2
                     .waitFor('passwordDataAvailable', {
@@ -321,7 +339,8 @@ class AWSDriver extends Driver {
                   .then((config) => {
 
                     let _createMachine = function(password) {
-                      return Machine.create({
+                      return Machine.update({id: server.id},
+                        {
                         id: server.id,
                         name: server.name,
                         type: type,
@@ -330,7 +349,8 @@ class AWSDriver extends Driver {
                         username: config.awsMachineUsername,
                         password: password,
                         domain: '',
-                        plazaport: config.plazaPort
+                        plazaport: config.plazaPort,
+                        status: 'up'
                       });
                     };
 
