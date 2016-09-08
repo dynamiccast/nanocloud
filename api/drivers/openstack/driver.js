@@ -143,6 +143,18 @@ class OpenstackDriver extends Driver {
               if (err) {
                 return reject(err);
               } else {
+
+                Machine.create({
+                  id        : server.id,
+                  name      : server.name,
+                  type      : this.name(),
+                  ip        : null,
+                  username  : config.openstackMachineUsername,
+                  password  : password,
+                  domain    : '',
+                  plazaport : config.plazaPort,
+                  status    : 'booting'
+                });
                 return server.setWait({status: server.STATUS.running}, 1000, (err) => {
                   if (err) {
                     return reject(err);
@@ -173,7 +185,8 @@ class OpenstackDriver extends Driver {
                     username  : config.openstackMachineUsername,
                     password  : password,
                     domain    : '',
-                    plazaport : config.plazaPort
+                    plazaport : config.plazaPort,
+                    status    : 'up'
                   })
                   );
                 }
