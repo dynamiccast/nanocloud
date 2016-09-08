@@ -71,6 +71,9 @@ module.exports = {
       model: 'user',
       unique: true
     },
+    status: {
+      type: 'string'
+    },
 
     setEndDate(duration) {
       let now = (new Date()).getTime();

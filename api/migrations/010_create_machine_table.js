@@ -35,6 +35,7 @@ function up(knex) {
     table.dateTime('endDate');
     table.string('plazaport');
     table.string('flavor');
+    table.string('status');
 
     table.string('user').unique().references('user.id').onDelete('CASCADE').onUpdate('CASCADE');
 
