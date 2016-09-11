@@ -109,7 +109,7 @@ module.exports = {
               return PlazaService.files({
                 hostname: config.teamStorageAddress,
                 port: config.teamStoragePort
-              }, '/home/' + team.username);
+              }, '/home/' + team.username + '/' + (req.allParams().path || ''));
             });
         })
         .catch(res.negotiate);

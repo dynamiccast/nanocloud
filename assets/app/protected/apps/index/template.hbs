@@ -44,12 +44,30 @@
 }}
   {{remote-session connectionName=connectionName activator=activator}}
 {{/single-tab}}
+<!--
 
 {{dim-background show=showFileExplorer preventAction=isPublishing action="toggleFileExplorer"}}
-{{#file-explorer
+{{#floating-sidebar-component
   isVisible=showFileExplorer
   isPublishing=isPublishing
   api="file"
+  system="windows"
+  target="machines"
   action="refreshModel"
 }}
 {{/file-explorer}}
+-->
+
+{{dim-background show=showFileExplorer preventAction=isPublishing action="toggleFileExplorer"}}
+{{#floating-sidebar-component
+  isVisible=showFileExplorer
+}}
+  {{#application-publisher
+    isPublishing=isPublishing
+    api="file"
+    target='teams'
+    system='unix'
+    action="refreshModel"
+  }}
+  {{/application-publisher}}
+{{/floating-sidebar-component}}

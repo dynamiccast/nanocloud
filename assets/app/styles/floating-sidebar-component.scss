@@ -1,0 +1,9 @@
+.floating-sidebar-component {
+  position: fixed;
+  width: 40%;
+  height: 100%;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  background-color: $white;
+}
