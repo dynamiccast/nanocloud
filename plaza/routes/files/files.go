@@ -82,7 +82,7 @@ func CreateDirectory(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Error(err)
-		http.Error(w, "Unable to remove", http.StatusInternalServerError)
+		http.Error(w, "Unable to create directory", http.StatusInternalServerError)
 		return
 	}
 }

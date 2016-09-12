@@ -49,10 +49,6 @@ module.exports.policies = {
     'isAuthorized'
   ],
 
-  StorageController: {
-    download: 'checkDownloadToken',
-  },
-
   PropertyController: {
     find: true,
     findOne: false,
@@ -77,8 +73,9 @@ module.exports.policies = {
     destroy: 'isAdmin'
   },
 
-  storageController: {
+  StorageController: {
     create: false,
+    update: false,
     find: false,
     findOne: false,
     destroy: false,
