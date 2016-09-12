@@ -56,6 +56,7 @@ func Start() {
 	e.Patch("/files", files.Patch)
 	e.Delete("/files", files.Delete)
 	e.Post("/upload", files.Post)
+	e.Post("/directory", files.CreateDirectory)
 
 	/***
 	POWER
