@@ -70,6 +70,22 @@ func Patch(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func Delete(w http.ResponseWriter, r *http.Request) {
+
+	username := r.URL.Query()["username"][0]
+	filename := r.URL.Query()["filename"][0]
+	var path string
+
+	path = fmt.Sprintf("/home/%s/%s", username, filename)
+	err := os.RemoveAll(path);
+
+	if err != nil {
+		log.Error(err)
+		http.Error(w, "Unable to remove", http.StatusInternalServerError)
+		return
+	}
+}
+
 func Post(w http.ResponseWriter, r *http.Request) {
 	var dst *os.File
 	username := r.URL.Query()["username"][0]

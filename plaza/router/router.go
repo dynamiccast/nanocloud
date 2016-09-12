@@ -54,6 +54,7 @@ func Start() {
 
 	e.Get("/files", files.Get)
 	e.Patch("/files", files.Patch)
+	e.Delete("/files", files.Delete)
 	e.Post("/upload", files.Post)
 
 	/***
