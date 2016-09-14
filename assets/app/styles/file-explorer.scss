@@ -24,7 +24,7 @@
   }
 
   .filePath {
-    display: inline-block; 
+    display: inline-block;
 
     a {
       cursor: pointer;
@@ -44,12 +44,21 @@
     }
   }
 
+  .bar-items-wrapper {
+    position: relative;
+    top: 2px;
+
+    .newFolder {
+      top: -3px;
+    }
+  }
+
   .file-list-wrapper {
     overflow: auto;
     cursor: pointer;
-    position: absolute;
-    width: 94%;
-    height: calc(100% - 215px);
+    height: calc(100% - 180px);
+    border: 2px solid $white;
+    padding: 10px 0px 10px 0px;
 
     > .item {
       padding: 4px 10px 4px 5px;
