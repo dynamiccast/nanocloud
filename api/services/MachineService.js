@@ -241,14 +241,9 @@ function increaseUsersMachineEndDate(user) {
  * @return {Promise}
  */
 function _createMachine() {
-  let machine = {};
-
-  // Check machine's status every 5s if driver is not dummy (testing purpose)
-  const interval = (driverName() === 'dummy') ? (0) : (5000);
-
   return ConfigService.get('machinesName')
     .then((config) => {
-      return _driver.createMachine({
+      const machine = _driver.createMachine({
         name: config.machinesName
       });
     })
@@ -283,10 +278,13 @@ function _createMachine() {
               }
             }
           });
-      }, interval);
-    })
-    .catch(() => {
-      _createBrokerLog({}, 'Not created');
+        })
+        .catch(() => {
+          _createBrokerLog({}, 'Not created');
+        });
+
+      _awaitingMachines.push(machine);
+      return machine;
     });
 }
 
@@ -506,29 +504,7 @@ function _createBrokerLog(machine, state) {
     });
 }
 
-/**
- * Retrieve the machine's data
- *
- * @method refresh
- * @param {machine} Machine model
- * @return {Promise[Machine]}
- */
-function refresh(machine) {
-  return _driver.refresh(machine);
-}
-
-/**
- * Retrieve the machine's password
- *
- * @method getPassword
- * @param {machine} Machine model
- * @return {Promise[String]}
- */
-function getPassword(machine) {
-  return _driver.getPassword(machine);
-}
-
 module.exports = {
   initialize, getMachineForUser, driverName, sessionOpen, sessionEnded,
-  machines, createImage, getDefaultImage, refresh, getPassword
+  machines, createImage, getDefaultImage
 };
