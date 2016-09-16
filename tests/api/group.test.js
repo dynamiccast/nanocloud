@@ -23,7 +23,7 @@
  */
 
 // jshint mocha:true
-/* globals sails, Group */
+/* globals sails, Group, Image */
 
 var nano = require('./lib/nanotest');
 var chai = require('chai');
@@ -440,11 +440,12 @@ module.exports = function() {
       });
     });
 
-    describe('Add application to a group', function() {
+    describe('Add image to a group', function() {
 
-      it('Should return group with apps relationship', function(done) {
+      it('Should return group with images relationship', function(done) {
 
         var groupID = null;
+        var imageID = null;
 
         nano.request(sails.hooks.http.app)
           .post('/api/groups')
@@ -462,38 +463,42 @@ module.exports = function() {
           .then((res) => {
 
             groupID = res.body.data.id;
-
-            return nano.request(sails.hooks.http.app)
-              .patch('/api/groups/' + groupID)
-              .send({
-                'data': {
-                  'id': groupID,
-                  'attributes': {
-                    'name': 'Group to add application to'
-                  },
-                  'relationships': {
-                    'apps': {
-                      'data': [{
-                        'type': 'apps',
-                        'id': nano.desktopId()
-                      }]
+            return Image.findOne({
+              default: true
+            })
+              .then((image) => {
+                return nano.request(sails.hooks.http.app)
+                  .patch('/api/groups/' + groupID)
+                  .send({
+                    'data': {
+                      'id': groupID,
+                      'attributes': {
+                        'name': 'Group to add application to'
+                      },
+                      'relationships': {
+                        'images': {
+                          'data': [{
+                            'type': 'images',
+                            'id': image.id
+                          }]
+                        }
+                      },
+                      'type': 'groups'
                     }
-                  },
-                  'type': 'groups'
-                }
-              })
-              .set(nano.adminLogin())
-              .expect(200)
-              .expect((res) => {
-                expect(res.body.data).to.be.an('object');
-              })
-              .expect(nano.jsonApiSchema(expectedSchema))
-              .expect(nano.jsonApiRelationship({
-                'apps': [{
-                  type: 'apps',
-                  id: nano.desktopId()
-                }]
-              }));
+                  })
+                  .set(nano.adminLogin())
+                  .expect(200)
+                  .expect((res) => {
+                    expect(res.body.data).to.be.an('object');
+                  })
+                  .expect(nano.jsonApiSchema(expectedSchema))
+                  .expect(nano.jsonApiRelationship({
+                    'images': [{
+                      type: 'images',
+                      id: image.id
+                    }]
+                  }));
+              });
           })
           .then(() => {
             return done();
@@ -501,9 +506,9 @@ module.exports = function() {
       });
     });
 
-    describe('Remove application from a group', function() {
+    describe('Remove image from a group', function() {
 
-      it('Should return group without any applications relationship', function(done) {
+      it('Should return group without any images relationship', function(done) {
 
         var groupID = null;
 
@@ -524,37 +529,42 @@ module.exports = function() {
 
             groupID = res.body.data.id;
 
-            return nano.request(sails.hooks.http.app)
-              .patch('/api/groups/' + groupID)
-              .send({
-                'data': {
-                  'id': groupID,
-                  'attributes': {
-                    'name': 'Group to remove application from'
-                  },
-                  'relationships': {
-                    'apps': {
-                      'data': [{
-                        'type': 'apps',
-                        'id': nano.desktopId()
-                      }]
+            return Image.findOne({
+              default: true
+            })
+              .then((image) => {
+                nano.request(sails.hooks.http.app)
+                  .patch('/api/groups/' + groupID)
+                  .send({
+                    'data': {
+                      'id': groupID,
+                      'attributes': {
+                        'name': 'Group to remove application from'
+                      },
+                      'relationships': {
+                        'images': {
+                          'data': [{
+                            'type': 'images',
+                            'id': image.id
+                          }]
+                        }
+                      },
+                      'type': 'groups'
                     }
-                  },
-                  'type': 'groups'
-                }
-              })
-              .set(nano.adminLogin())
-              .expect(200)
-              .expect((res) => {
-                expect(res.body.data).to.be.an('object');
-              })
-              .expect(nano.jsonApiSchema(expectedSchema))
-              .expect(nano.jsonApiRelationship({
-                'apps': [{
-                  type: 'apps',
-                  id: nano.desktopId()
-                }]
-              }));
+                  })
+                  .set(nano.adminLogin())
+                  .expect(200)
+                  .expect((res) => {
+                    expect(res.body.data).to.be.an('object');
+                  })
+                  .expect(nano.jsonApiSchema(expectedSchema))
+                  .expect(nano.jsonApiRelationship({
+                    'apps': [{
+                      type: 'apps',
+                      id: nano.desktopId()
+                    }]
+                  }));
+              });
           })
           .then(() => {
             return nano.request(sails.hooks.http.app)
@@ -566,7 +576,7 @@ module.exports = function() {
                     'name': 'Group to remove user from'
                   },
                   'relationships': {
-                    'apps': {
+                    'images': {
                       'data': []
                     }
                   },
@@ -580,7 +590,7 @@ module.exports = function() {
               })
               .expect(nano.jsonApiSchema(expectedSchema))
               .expect(nano.jsonApiRelationship({
-                'apps': []
+                'images': []
               }));
           })
           .then(() => {
