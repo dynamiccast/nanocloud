@@ -498,7 +498,9 @@ function getDefaultImage() {
  * @return {Promise} created log
  */
 function _createBrokerLog(machine, state) {
-  return Machine.count()
+  return Machine.count({
+    status: 'running'
+  })
     .then((nbrMachines) => {
       return BrokerLog.create({
         userId: machine.user,
