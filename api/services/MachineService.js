@@ -28,6 +28,7 @@ const ManualDriver = require('../drivers/manual/driver');
 const AWSDriver = require('../drivers/aws/driver');
 const DummyDriver = require('../drivers/dummy/driver');
 const OpenstackDriver = require('../drivers/openstack/driver');
+const promisePoller = require('promise-poller').default;
 
 /**
  * Service responssible of the machine pool
@@ -259,38 +260,34 @@ function _createMachine() {
       return Machine.create(machine);
     })
     .then(() => {
-      let i = 0; // To prevent infinite loop in case of error
-      let loop = setInterval(function (){
-        i++;
-        if (i > 180) { // 15 minutes before timeout
-          clearInterval(loop);
-          _createBrokerLog(machine, 'Terminated (timeout when booting)');
-          return _terminateMachine(machine);
-        }
-        machine.refresh()
-          .then((machine) => { // Refresh machine's data from iaas
-            if (machine.status !== 'booting') {
-              clearInterval(loop);
-              if (!machine.password && machine.status === 'running') {
-                machine.getPassword()
-                  .then((pwd) => {
-                    machine.password = pwd;
-                    return Machine.update({id: machine.id}, machine);
-                  });
-              }
-              else {
-                return Machine.update({id: machine.id}, machine);
-              }
-            }
-          });
-        })
-        .catch(() => {
-          _createBrokerLog({}, 'Not created');
-        });
 
-      _awaitingMachines.push(machine);
-      return machine;
-    }, interval);
+      var poller = promisePoller({
+        taskFn: () => {
+
+          return machine.refresh()
+            .then((machine) => {
+
+              if (machine.status !== 'booting') {
+
+                if (!machine.password && machine.status === 'running') {
+                  machine.getPassword()
+                    .then((pwd) => {
+                      machine.password = pwd;
+                      return Machine.update({id: machine.id}, machine);
+                    });
+                }
+                else {
+                  return Machine.update({id: machine.id}, machine);
+                }
+              }
+
+              return Promise.reject(machine);
+            });
+        },
+        interval: 5000,
+        retries: 100
+      });
+    });
 }
 
 function _terminateMachine(machine) {
