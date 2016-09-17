@@ -23,6 +23,7 @@
 
 /* global ConfigService, Machine, Image, User, BrokerLog */
 
+const _ = require('lodash');
 const Promise = require('bluebird');
 const ManualDriver = require('../drivers/manual/driver');
 const AWSDriver = require('../drivers/aws/driver');
@@ -64,15 +65,6 @@ let _driver = null;
  * @private
  */
 let _initializing = null;
-
-/**
- * The list of the machine beeing created.
- *
- * @property _awaitingMachines
- * @type {[]Promise[Machine]}
- * @private
- */
-let _awaitingMachines = [];
 
 /**
  * Returns a Promise that reject `err` if `condition` if false. A resolved
@@ -242,10 +234,7 @@ function increaseUsersMachineEndDate(user) {
  * @return {Promise}
  */
 function _createMachine() {
-  let machine = {};
-
-  // Check machine's status every 5s if driver is not dummy (testing purpose)
-  const interval = (driverName() === 'dummy') ? (0) : (5000);
+  let machine = [];
 
   return ConfigService.get('machinesName')
     .then((config) => {
@@ -253,13 +242,15 @@ function _createMachine() {
         name: config.machinesName
       });
     })
-    .then((res) => {
-      machine = res;
+    .then((_machine) => {
+
+      machine = _machine;
+
       machine.status = 'booting';
       _createBrokerLog(machine, 'Created');
       return Machine.create(machine);
     })
-    .then(() => {
+    .then((machine) => {
 
       return promisePoller({
         taskFn: () => {
@@ -274,8 +265,7 @@ function _createMachine() {
                       machine.password = pwd;
                       return Machine.update({id: machine.id}, machine);
                     });
-                }
-                else {
+                } else {
                   return Machine.update({id: machine.id}, machine);
                 }
               }
@@ -285,14 +275,15 @@ function _createMachine() {
         },
         interval: 5000,
         retries: 100
-      });
-    })
-    .then(() => {
+      })
+        .catch(() => {
+          _createBrokerLog(machine, 'Error');
+          _terminateMachine(machine);
+          throw machine;
+        });
+      })
+    .then((machine) => {
       _createBrokerLog(machine, 'Available');
-    })
-    .catch(() => {
-      _createBrokerLog(machine, 'Error');
-      throw machine;
     });
 }
 
@@ -321,32 +312,40 @@ function _terminateMachine(machine) {
  * @return {Promise}
  */
 function _updateMachinesPool() {
+
   return assert(!!_driver, driverNotInitializedError)
     .then(() => {
-      return ConfigService.get('machinePoolSize')
-        .then((config) => {
-          return Machine.count({
-            where: {
-              user: null
-            }
-          })
-            .then((machineNbr) => {
-              let i = (config.machinePoolSize + _awaitingMachines.length) - machineNbr;
-              if (i > 0) {
-                _createBrokerLog({
-                  type: _driver.name()
-                }, 'Update machine pool');
-              }
-              let machines = [];
-              while (i > 0) {
-                machines.push(_createMachine());
-                i--;
-              }
 
-              return Promise.all(machines);
-            });
+      return Promise.props({
+        config: ConfigService.get('machinePoolSize'),
+        machineCount: Machine.count({
+          status: 'running',
+          user: null
+        })
+      })
+        .then(({config, machineCount}) => {
+
+          let machineToCreate = config.machinePoolSize - machineCount;
+          let machines = _.times(machineToCreate, () => _createMachine());
+
+          if (machineToCreate > 0) {
+            _createBrokerLog({
+              type: _driver.name()
+            }, `Update machine pool from ${machineCount} to ${machineCount + machineToCreate} (+${machineToCreate})`);
+          }
+          return Promise.all(machines);
         });
-    });
+    })
+    .then(() => {
+      _createBrokerLog({
+        type: _driver.name()
+      }, 'Machine pool updated');
+    })
+    .catch(() => {
+      _createBrokerLog({
+        type: _driver.name()
+      }, 'Error while updating the pool');
+    })
 }
 
 /**
