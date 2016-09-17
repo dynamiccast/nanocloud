@@ -261,9 +261,8 @@ function _createMachine() {
     })
     .then(() => {
 
-      var poller = promisePoller({
+      return promisePoller({
         taskFn: () => {
-
           return machine.refresh()
             .then((machine) => {
 
@@ -287,6 +286,13 @@ function _createMachine() {
         interval: 5000,
         retries: 100
       });
+    })
+    .then(() => {
+      _createBrokerLog(machine, 'Available');
+    })
+    .catch(() => {
+      _createBrokerLog(machine, 'Error');
+      throw machine;
     });
 }
 

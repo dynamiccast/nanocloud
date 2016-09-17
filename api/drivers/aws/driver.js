@@ -440,27 +440,37 @@ class AWSDriver extends Driver {
   refresh(machine) {
     return this.getServer(machine.id)
       .then((res) => {
-        return new Promise((resolve, reject) => {
-          const server = res.server;
-          const password = res.password;
-          const ip = res.addresses.public[0] || server.addresses.private[0];
-          this._client.ec2.waitFor('instanceStatusOk', {
-            InstanceIds: [machine.id]
-          }, function(err, data) {
-            if (err) {
-              reject(err);
-            } else if (!data) {
-              machine.status = 'pending';
-            } else if (data.InstanceStatuses[0].InstanceState.Code === 16) {
-              machine.status = 'running';
-            } else {
-              machine.status = 'unknown';
-            }
-            machine.password = password;
-            machine.ip = ip;
-            return resolve(machine);
+
+        machine.ip = res.addresses.public[0] || res.addresses.private[0];
+        if (res.status === 'PROVISIONING') {
+          machine.status = 'booting';
+        } else if (res.status === 'RUNNING') { // If instance is running, let's gather more information before considering it available
+          return new Promise((resolve, reject) => {
+            this._client.ec2.describeInstanceStatus({
+              InstanceIds: [machine.id]
+            }, (err, data) => {
+
+              if (err) {
+                return reject(err);
+              }
+
+              let instance = data.InstanceStatuses.pop();
+              if (!instance) {
+                machine.status = 'booting';
+              } else if (instance.InstanceState.Name === "running") {
+                if (instance.SystemStatus.Status === 'ok' && instance.InstanceStatus.Status === 'ok') {
+                  machine.status = 'running';
+                }
+              } else {
+                machine.status = 'unknown';
+              }
+
+              return resolve(machine);
+            });
           });
-        });
+        }
+
+        return Promise.resolve(machine);
       });
   }
 
