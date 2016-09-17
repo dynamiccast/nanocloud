@@ -482,79 +482,27 @@ class AWSDriver extends Driver {
    * @return {Promise[String]}
    */
   getPassword(machine) {
-    var image = null;
-    var server = null;
-    return MachineService.getDefaultImage()
-      .then((res) => {
-        image = res;
-        return this.getServer(machine.id);
-      })
-      .then((res) => {
-        server = res;
-        return new Promise((resolve, reject) => {
-          if (image.password === null) {
-            return this._client.ec2
+
+    return Promise.props({
+      image: MachineService.getDefaultImage()
+    })
+      .then(({image}) => {
+
+        if (image.password !== null) {
+          return Promise.resolve(image.password);
+        } else {
+          return new Promise((resolve, reject) => {
+            this._client.ec2
               .waitFor('passwordDataAvailable', {
                 InstanceId: machine.id
               }, (err, res) => {
                 if (err) {
                   return reject(err);
                 }
-                return resolve({
-                  server: server,
-                  password: res.PasswordData,
-                  image: image
-                });
+
+                return resolve(this._decryptPassword(res.PasswordData));
               });
-          }
-          this._client.ec2
-            .waitFor('instanceStatusOk', {
-              InstanceIds: [machine.id]
-            }, (err) => {
-
-              if (err) {
-                return reject(err);
-              }
-
-              this._client.ec2
-                .waitFor('systemStatusOk', {
-                  InstanceIds: [machine.id]
-                }, (err) => {
-                  if (err) {
-                    return reject(err);
-                  }
-
-                  return resolve({
-                    server: server,
-                    password: image.password,
-                    image: image
-                  });
-                });
-            });
-        });
-      })
-      .then((res) => {
-        return new Promise((resolve, reject) => {
-          res.server.refresh((err, server) => {
-            if (err) {
-              reject(err);
-            } else {
-              res.server = server;
-              resolve(res);
-            }
           });
-        });
-      })
-      .then((res) => {
-        const password = res.password;
-
-        if (image.password) {
-          return Promise.resolve(password);
-        } else {
-          return this._decryptPassword(password)
-            .then((password) => {
-              return Promise.resolve(password);
-            });
         }
       });
   }

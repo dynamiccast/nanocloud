@@ -234,7 +234,6 @@ function increaseUsersMachineEndDate(user) {
  * @return {Promise}
  */
 function _createMachine() {
-  let machine = [];
 
   return ConfigService.get('machinesName')
     .then((config) => {
@@ -242,9 +241,7 @@ function _createMachine() {
         name: config.machinesName
       });
     })
-    .then((_machine) => {
-
-      machine = _machine;
+    .then((machine) => {
 
       machine.status = 'booting';
       _createBrokerLog(machine, 'Created');
@@ -257,33 +254,32 @@ function _createMachine() {
           return machine.refresh()
             .then((machine) => {
 
-              if (machine.status !== 'booting') {
-
-                if (!machine.password && machine.status === 'running') {
-                  machine.getPassword()
-                    .then((pwd) => {
-                      machine.password = pwd;
-                      return Machine.update({id: machine.id}, machine);
-                    });
-                } else {
-                  return Machine.update({id: machine.id}, machine);
-                }
+              if (machine.status === 'running') {
+                return Promise.resolve(machine);
+              } else {
+                return Promise.reject(machine);
               }
-
-              return Promise.reject(machine);
             });
         },
         interval: 5000,
         retries: 100
       })
-        .catch(() => {
-          _createBrokerLog(machine, 'Error');
-          _terminateMachine(machine);
+        .catch((errs) => { // If timeout is reached
+          _createBrokerLog(errs.pop(), 'Error');
+          _terminateMachine(errs.pop());
           throw machine;
         });
-      })
+    })
     .then((machine) => {
-      _createBrokerLog(machine, 'Available');
+      return machine.getPassword()
+        .then((password) => {
+          machine.password = password;
+
+          return Machine.update({id: machine.id}, machine);
+        })
+        .then(() => {
+          _createBrokerLog(machine, 'Available');
+        });
     });
 }
 
