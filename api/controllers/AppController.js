@@ -117,7 +117,7 @@ module.exports = {
 
         values.image = defaultImage.id;
         App.create(values)
-          .then(res.ok)
+          .then(res.created)
           .catch(res.negotiate);
       });
   },
