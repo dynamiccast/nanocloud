@@ -341,7 +341,7 @@ function _updateMachinesPool() {
       _createBrokerLog({
         type: _driver.name()
       }, 'Error while updating the pool');
-    })
+    });
 }
 
 /**

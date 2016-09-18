@@ -457,7 +457,7 @@ class AWSDriver extends Driver {
               let instance = data.InstanceStatuses.pop();
               if (!instance) {
                 machine.status = 'booting';
-              } else if (instance.InstanceState.Name === "running") {
+              } else if (instance.InstanceState.Name === 'running') {
                 if (instance.SystemStatus.Status === 'ok' && instance.InstanceStatus.Status === 'ok') {
                   machine.status = 'running';
                 }
