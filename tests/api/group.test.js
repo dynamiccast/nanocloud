@@ -445,7 +445,6 @@ module.exports = function() {
       it('Should return group with images relationship', function(done) {
 
         var groupID = null;
-        var imageID = null;
 
         nano.request(sails.hooks.http.app)
           .post('/api/groups')
