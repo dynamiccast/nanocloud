@@ -157,7 +157,7 @@ function getMachineForUser(user) {
             FROM (
               SELECT machine.id
               FROM machine
-              WHERE "user" IS NULL
+              WHERE "user" IS NULL AND "status" = 'running'
               LIMIT 1
               FOR UPDATE SKIP LOCKED
             ) sub
