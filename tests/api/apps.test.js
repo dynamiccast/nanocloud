@@ -161,433 +161,413 @@ module.exports = function() {
     });
   });
 
-//  describe('Group app permission', function() {
-//
-//    let group1 = null;
-//    let group2 = null;
-//    let someguy = null;
-//    let someotherguy = null;
-//    let someguytoken = null;
-//    let someotherguytoken = null;
-//    let app1 = null;
-//    let app2 = null;
-//    /*
-//     * For this testing, let's have:
-//     * - 2 groups (group1 amd group2)
-//     * - 3 users (admin, someguy and someotherguy)
-//     * - 3 apps (desktop and app1 and app2)
-//     * group1 has admin and someotherguy as user and desktop + app1 as app
-//     * group2 has someguy and someotherguy as user and app1 + app2 as app
-//     */
-//    before('Add proper groups, users and app for testing', function(done) {
-//
-//      Group.create({
-//        name: 'group1'
-//      })
-//        .then((res) => {
-//          group1 = res.id;
-//
-//          return Group.create({
-//            name: 'group2'
-//          });
-//        })
-//        .then((res) => {
-//          group2 = res.id;
-//
-//          return User.create({
-//            email: 'someguy@nanocloud.com',
-//            firstName: 'someguy',
-//            lastName: 'someguy',
-//            password: 'Nanocloud123+',
-//            isAdmin: false
-//          });
-//        })
-//        .then((res) => {
-//          someguy = res.id;
-//
-//          return User.create({
-//            email: 'someotherguy@nanocloud.com',
-//            firstName: 'someotherguy',
-//            lastName: 'someotherguy',
-//            password: 'Nanocloud123+',
-//            isAdmin: false
-//          });
-//        })
-//        .then((res) => {
-//          someotherguy = res.id;
-//
-//          return AccessToken.create({
-//            userId: someguy
-//          });
-//        })
-//        .then((res) => {
-//          someguytoken = res.token;
-//
-//          return AccessToken.create({
-//            userId: someotherguy
-//          });
-//        })
-//        .then((res) => {
-//          someotherguytoken = res.token;
-//
-//          return App.create({
-//            alias: 'app1',
-//            displayName: 'app1',
-//            filePath: 'C:\\invalid.exe'
-//          });
-//        })
-//        .then((res) => {
-//          app1 = res.id;
-//
-//          return App.create({
-//            alias: 'app2',
-//            displayName: 'app2',
-//            filePath: 'C:\\invalid.exe'
-//          });
-//        })
-//        .then((res) => {
-//          app2 = res.id;
-//
-//          return nano.request(sails.hooks.http.app)
-//            .patch('/api/groups/' + group1)
-//            .send({
-//              'data': {
-//                'id': group1,
-//                'attributes': {
-//                  'name': 'group1'
-//                },
-//                'relationships': {
-//                  'apps': {
-//                    'data': [{
-//                      'type': 'apps',
-//                      'id': app1
-//                    }, {
-//                      'type': 'apps',
-//                      'id': nano.desktopId()
-//                    }]
-//                  },
-//                  'members': {
-//                    'data': [{
-//                      'type': 'users',
-//                      'id': someotherguy
-//                    }, {
-//                      'type': 'users',
-//                      'id': nano.adminId()
-//                    }]
-//                  }
-//                },
-//                'type': 'groups'
-//              }
-//            })
-//            .set(nano.adminLogin())
-//            .expect(200);
-//        })
-//        .then(() => {
-//
-//          return nano.request(sails.hooks.http.app)
-//            .patch('/api/groups/' + group2)
-//            .send({
-//              'data': {
-//                'id': group2,
-//                'attributes': {
-//                  'name': 'group2'
-//                },
-//                'relationships': {
-//                  'apps': {
-//                    'data': [{
-//                      'type': 'apps',
-//                      'id': app1
-//                    }, {
-//                      'type': 'apps',
-//                      'id': app2
-//                    }]
-//                  },
-//                  'members': {
-//                    'data': [{
-//                      'type': 'users',
-//                      'id': someotherguy
-//                    }, {
-//                      'type': 'users',
-//                      'id': someguy
-//                    }]
-//                  }
-//                },
-//                'type': 'groups'
-//              }
-//            })
-//            .set(nano.adminLogin())
-//            .expect(200);
-//        })
-//        .then(() => {
-//          return done();
-//        });
-//    });
-//
-//    after('Cleaning groups', function(done) {
-//
-//      Group.query('DELETE FROM public.group', () => {
-//        return User.destroy([
-//          someguy,
-//          someotherguy
-//        ])
-//          .then(() => {
-//            return App.destroy([
-//              app1,
-//              app2
-//            ]);
-//          })
-//          .then(() => {
-//            return done();
-//          });
-//      });
-//    });
-//
-//    it('Admins should be able to list all apps', function(done) {
-//
-//      nano.request(sails.hooks.http.app)
-//        .get('/api/apps')
-//        .set(nano.adminLogin())
-//        .expect(200)
-//        .expect((res) => {
-//          expect(res.body.data).to.have.length(3);
-//        })
-//        .expect((res) => {
-//
-//          expect(res.body.data).to.include({
-//            'type': 'apps',
-//            'id': app1,
-//            'attributes': {
-//              'alias': 'app1',
-//              'display-name': 'app1',
-//              'file-path': 'C:\\invalid.exe'
-//            }
-//          });
-//          expect(res.body.data).to.include({
-//            'type': 'apps',
-//            'id': app2,
-//            'attributes': {
-//              'alias': 'app2',
-//              'display-name': 'app2',
-//              'file-path': 'C:\\invalid.exe'
-//            }
-//          });
-//          expect(res.body.data).to.include({
-//            'type': 'apps',
-//            'id': nano.desktopId(),
-//            'attributes': {
-//              'alias': 'Desktop',
-//              'display-name': 'Desktop',
-//              'file-path': 'C:\\Windows\\explorer.exe'
-//            }
-//          });
-//        })
-//        .then(() => {
-//          return done();
-//        });
-//    });
-//
-//    it('Regular users should only be able to retrieve apps included in groups they are member of', function(done) {
-//
-//      nano.request(sails.hooks.http.app)
-//        .get('/api/apps')
-//        .set({
-//          'Authorization': 'Bearer ' + someguytoken
-//        })
-//        .expect(200)
-//        .expect((res) => {
-//          expect(res.body.data).to.have.length(2);
-//        })
-//        .expect((res) => {
-//
-//          expect(res.body.data).to.include({
-//            'type': 'apps',
-//            'id': app1,
-//            'attributes': {
-//              'alias': 'app1',
-//              'display-name': 'app1',
-//              'file-path': 'C:\\invalid.exe'
-//            }
-//          });
-//          expect(res.body.data).to.include({
-//            'type': 'apps',
-//            'id': app2,
-//            'attributes': {
-//              'alias': 'app2',
-//              'display-name': 'app2',
-//              'file-path': 'C:\\invalid.exe'
-//            }
-//          });
-//        })
-//        .then(() => {
-//          nano.request(sails.hooks.http.app)
-//            .get('/api/apps')
-//            .set({
-//              'Authorization': 'Bearer ' + someotherguytoken
-//            })
-//            .expect(200)
-//            .expect((res) => {
-//              expect(res.body.data).to.have.length(3);
-//            })
-//            .expect((res) => {
-//
-//              expect(res.body.data).to.include({
-//                'type': 'apps',
-//                'id': app1,
-//                'attributes': {
-//                  'alias': 'app1',
-//                  'display-name': 'app1',
-//                  'file-path': 'C:\\invalid.exe'
-//                }
-//              });
-//              expect(res.body.data).to.include({
-//                'type': 'apps',
-//                'id': app2,
-//                'attributes': {
-//                  'alias': 'app2',
-//                  'display-name': 'app2',
-//                  'file-path': 'C:\\invalid.exe'
-//                }
-//              });
-//              expect(res.body.data).to.include({
-//                'type': 'apps',
-//                'id': nano.desktopId(),
-//                'attributes': {
-//                  'alias': 'Desktop',
-//                  'display-name': 'Desktop',
-//                  'file-path': 'C:\\Windows\\explorer.exe'
-//                }
-//              });
-//            })
-//            .then(() => {
-//              return done();
-//            });
-//        });
-//    });
-//
-//    it('Admins should be able to get connection out of every app', function(done) {
-//
-//      MachineService.getMachineForUser({
-//        id: nano.adminId()
-//      })
-//        .then((machine) => {
-//          nano.request(sails.hooks.http.app)
-//            .get('/api/apps/connections')
-//            .set(nano.adminLogin())
-//            .expect(200)
-//            .expect((res) => {
-//              expect(res.body.data).to.have.length(3);
-//            })
-//            .expect((res) => {
-//              expect(res.body.data).to.include({
-//                'type': 'apps',
-//                'id': app1,
-//                'attributes': {
-//                  'hostname': '127.0.0.1',
-//                  'port': 3389,
-//                  'username': 'Administrator',
-//                  'password': null,
-//                  'remote-app': '',
-//                  'protocol': 'rdp',
-//                  'app-name': 'app1',
-//                  'machine-id': machine.id,
-//                  'machine-type': 'dummy',
-//                  'machine-driver': 'dummy'
-//                }
-//              });
-//              expect(res.body.data).to.include({
-//                'type': 'apps',
-//                'id': app2,
-//                'attributes': {
-//                  'hostname': '127.0.0.1',
-//                  'port': 3389,
-//                  'username': 'Administrator',
-//                  'password': null,
-//                  'remote-app': '',
-//                  'protocol': 'rdp',
-//                  'app-name': 'app2',
-//                  'machine-id': machine.id,
-//                  'machine-type': 'dummy',
-//                  'machine-driver': 'dummy'
-//                }
-//              });
-//              expect(res.body.data).to.include({
-//                'type': 'apps',
-//                'id': nano.desktopId(),
-//                'attributes': {
-//                  'hostname': '127.0.0.1',
-//                  'port': 3389,
-//                  'username': 'Administrator',
-//                  'password': null,
-//                  'remote-app': '',
-//                  'protocol': 'rdp',
-//                  'app-name': 'Desktop',
-//                  'machine-id': machine.id,
-//                  'machine-type': 'dummy',
-//                  'machine-driver': 'dummy'
-//                }
-//              });
-//
-//            })
-//            .then(() => {
-//              return done();
-//            });
-//        });
-//    });
-//
-//    it('Regular users should be able to get connections out of their apps', function(done) {
-//
-//      MachineService.getMachineForUser({
-//        id: someguy
-//      })
-//        .then((machine) => {
-//          nano.request(sails.hooks.http.app)
-//            .get('/api/apps/connections')
-//            .set({
-//              'Authorization': 'Bearer ' + someguytoken
-//            })
-//            .expect(200)
-//            .expect((res) => {
-//              expect(res.body.data).to.have.length(2);
-//            })
-//            .expect((res) => {
-//
-//              expect(res.body.data).to.include({
-//                'type': 'apps',
-//                'id': app1,
-//                'attributes': {
-//                  'hostname': '127.0.0.1',
-//                  'port': 3389,
-//                  'username': 'Administrator',
-//                  'password': null,
-//                  'remote-app': '',
-//                  'protocol': 'rdp',
-//                  'app-name': 'app1',
-//                  'machine-id': machine.id,
-//                  'machine-type': 'dummy',
-//                  'machine-driver': 'dummy'
-//                }
-//              });
-//              expect(res.body.data).to.include({
-//                'type': 'apps',
-//                'id': app2,
-//                'attributes': {
-//                  'hostname': '127.0.0.1',
-//                  'port': 3389,
-//                  'username': 'Administrator',
-//                  'password': null,
-//                  'remote-app': '',
-//                  'protocol': 'rdp',
-//                  'app-name': 'app2',
-//                  'machine-id': machine.id,
-//                  'machine-type': 'dummy',
-//                  'machine-driver': 'dummy'
-//                }
-//              });
-//            })
-//            .then(() => {
-//              return done();
-//            });
-//        });
-//    });
-//  });
-};
+ describe('Group image permission', function() {
+
+   let app1 = null;
+   let app2 = null;
+   let group1 = null;
+   let group2 = null;
+   let someguy = null;
+   let someotherguy = null;
+   let someguytoken = null;
+   let someotherguytoken = null;
+   let image = null;
+   /*
+    * For this testing, let's have:
+    * - 1 default image
+    * - 2 groups (group1 and group2)
+    * - 3 users (admin, someguy and someotherguy)
+    * - 2 apps (app1 and app2 which is the desktop)
+    * image has app1 and desktop has apps
+    * group1 has admin and someotherguy as users and image as image
+    * group2 has someguy and someotherguy as users and no link to any image
+    */
+   before('Add proper groups, users and app for testing', function(done) {
+
+     Image.findOne({
+       default: true
+     })
+       .populate('apps')
+       .then((defaultImage) => {
+
+         image = defaultImage.id;
+         app2 = defaultImage.apps[0].id;
+
+         return Group.create({
+           name: 'group1'
+         });
+       })
+       .then((res) => {
+         group1 = res.id;
+
+         return Group.create({
+           name: 'group2'
+         });
+       })
+       .then((res) => {
+         group2 = res.id;
+
+         return User.create({
+           email: 'someguy@nanocloud.com',
+           firstName: 'someguy',
+           lastName: 'someguy',
+           password: 'Nanocloud123+',
+           isAdmin: false
+         });
+       })
+       .then((res) => {
+         someguy = res.id;
+
+         return User.create({
+           email: 'someotherguy@nanocloud.com',
+           firstName: 'someotherguy',
+           lastName: 'someotherguy',
+           password: 'Nanocloud123+',
+           isAdmin: false
+         });
+       })
+       .then((res) => {
+         someotherguy = res.id;
+
+         return AccessToken.create({
+           userId: someguy
+         });
+       })
+       .then((res) => {
+         someguytoken = res.token;
+
+         return AccessToken.create({
+           userId: someotherguy
+         });
+       })
+       .then((res) => {
+         someotherguytoken = res.token;
+
+         return App.create({
+           alias: 'app1',
+           displayName: 'app1',
+           filePath: 'C:\\invalid.exe',
+           image: image
+         });
+       })
+       .then((res) => {
+         app1 = res.id;
+
+         Image.update(image, {
+           apps: [
+             app1
+           ]
+         });
+       })
+       .then(() => {
+
+         return nano.request(sails.hooks.http.app)
+           .patch('/api/groups/' + group1)
+           .send({
+             'data': {
+               'id': group1,
+               'attributes': {
+                 'name': 'group1'
+               },
+               'relationships': {
+                 'images': {
+                   'data': [{
+                     'type': 'images',
+                     'id': image
+                   }]
+                 },
+                 'members': {
+                   'data': [{
+                     'type': 'users',
+                     'id': someotherguy
+                   }, {
+                     'type': 'users',
+                     'id': nano.adminId()
+                   }]
+                 }
+               },
+               'type': 'groups'
+             }
+           })
+           .set(nano.adminLogin())
+           .expect(200);
+       })
+       .then(() => {
+
+         return nano.request(sails.hooks.http.app)
+           .patch('/api/groups/' + group2)
+           .send({
+             'data': {
+               'id': group2,
+               'attributes': {
+                 'name': 'group2'
+               },
+               'relationships': {
+                 'images': {
+                   'data': []
+                 },
+                 'members': {
+                   'data': [{
+                     'type': 'users',
+                     'id': someotherguy
+                   }, {
+                     'type': 'users',
+                     'id': someguy
+                   }]
+                 }
+               },
+               'type': 'groups'
+             }
+           })
+           .set(nano.adminLogin())
+           .expect(200);
+       })
+       .then(() => {
+         return done();
+       });
+   });
+
+   after('Cleaning groups', function(done) {
+
+     Group.query('DELETE FROM public.group', () => {
+       return User.destroy([
+         someguy,
+         someotherguy
+       ])
+         .then(() => {
+           return App.destroy([
+             app1,
+             app2
+           ]);
+         })
+         .then(() => {
+           return done();
+         });
+     });
+   });
+
+   it('Admins should be able to list all apps', function(done) {
+
+     nano.request(sails.hooks.http.app)
+       .get('/api/apps')
+       .set(nano.adminLogin())
+       .expect(200)
+       .expect((res) => {
+         expect(res.body.data).to.have.length(2);
+       })
+       .expect((res) => {
+
+         expect(res.body.data[0].id).to.equal(app1);
+         expect(res.body.data[1].id).to.equal(app2);
+       })
+       .then(() => {
+         return done();
+       });
+   });
+
+   it('Regular users should only be able to retrieve apps included in groups they are member of', function(done) {
+
+     nano.request(sails.hooks.http.app)
+       .get('/api/apps')
+       .set({
+         'Authorization': 'Bearer ' + someguytoken
+       })
+       .expect(200)
+       .expect((res) => {
+         console.log(res.body);
+         expect(res.body.data).to.have.length(2);
+       })
+       .expect((res) => {
+
+         expect(res.body.data).to.include({
+           'type': 'apps',
+           'id': app1,
+           'attributes': {
+             'alias': 'app1',
+             'display-name': 'app1',
+             'file-path': 'C:\\invalid.exe'
+           }
+         });
+         expect(res.body.data).to.include({
+           'type': 'apps',
+           'id': app2,
+           'attributes': {
+             'alias': 'app2',
+             'display-name': 'app2',
+             'file-path': 'C:\\invalid.exe'
+           }
+         });
+       })
+       .then(() => {
+         nano.request(sails.hooks.http.app)
+           .get('/api/apps')
+           .set({
+             'Authorization': 'Bearer ' + someotherguytoken
+           })
+           .expect(200)
+           .expect((res) => {
+             expect(res.body.data).to.have.length(3);
+           })
+           .expect((res) => {
+
+             expect(res.body.data).to.include({
+               'type': 'apps',
+               'id': app1,
+               'attributes': {
+                 'alias': 'app1',
+                 'display-name': 'app1',
+                 'file-path': 'C:\\invalid.exe'
+               }
+             });
+             expect(res.body.data).to.include({
+               'type': 'apps',
+               'id': app2,
+               'attributes': {
+                 'alias': 'app2',
+                 'display-name': 'app2',
+                 'file-path': 'C:\\invalid.exe'
+               }
+             });
+             expect(res.body.data).to.include({
+               'type': 'apps',
+               'id': nano.desktopId(),
+               'attributes': {
+                 'alias': 'Desktop',
+                 'display-name': 'Desktop',
+                 'file-path': 'C:\\Windows\\explorer.exe'
+               }
+             });
+           })
+           .then(() => {
+             return done();
+           });
+       });
+   });
+
+   it('Admins should be able to get connection out of every app', function(done) {
+
+     MachineService.getMachineForUser({
+       id: nano.adminId()
+     })
+       .then((machine) => {
+         nano.request(sails.hooks.http.app)
+           .get('/api/apps/connections')
+           .set(nano.adminLogin())
+           .expect(200)
+           .expect((res) => {
+             expect(res.body.data).to.have.length(3);
+           })
+           .expect((res) => {
+             expect(res.body.data).to.include({
+               'type': 'apps',
+               'id': app1,
+               'attributes': {
+                 'hostname': '127.0.0.1',
+                 'port': 3389,
+                 'username': 'Administrator',
+                 'password': null,
+                 'remote-app': '',
+                 'protocol': 'rdp',
+                 'app-name': 'app1',
+                 'machine-id': machine.id,
+                 'machine-type': 'dummy',
+                 'machine-driver': 'dummy'
+               }
+             });
+             expect(res.body.data).to.include({
+               'type': 'apps',
+               'id': app2,
+               'attributes': {
+                 'hostname': '127.0.0.1',
+                 'port': 3389,
+                 'username': 'Administrator',
+                 'password': null,
+                 'remote-app': '',
+                 'protocol': 'rdp',
+                 'app-name': 'app2',
+                 'machine-id': machine.id,
+                 'machine-type': 'dummy',
+                 'machine-driver': 'dummy'
+               }
+             });
+             expect(res.body.data).to.include({
+               'type': 'apps',
+               'id': nano.desktopId(),
+               'attributes': {
+                 'hostname': '127.0.0.1',
+                 'port': 3389,
+                 'username': 'Administrator',
+                 'password': null,
+                 'remote-app': '',
+                 'protocol': 'rdp',
+                 'app-name': 'Desktop',
+                 'machine-id': machine.id,
+                 'machine-type': 'dummy',
+                 'machine-driver': 'dummy'
+               }
+             });
+
+           })
+           .then(() => {
+             return done();
+           });
+       });
+   });
+
+     it('Regular users should be able to get connections out of their apps', function(done) {
+
+       MachineService.getMachineForUser({
+         id: someguy
+       })
+         .then((machine) => {
+           nano.request(sails.hooks.http.app)
+             .get('/api/apps/connections')
+             .set({
+               'Authorization': 'Bearer ' + someguytoken
+             })
+             .expect(200)
+             .expect((res) => {
+               expect(res.body.data).to.have.length(2);
+             })
+             .expect((res) => {
+
+               expect(res.body.data).to.include({
+                 'type': 'apps',
+                 'id': app1,
+                 'attributes': {
+                   'hostname': '127.0.0.1',
+                   'port': 3389,
+                   'username': 'Administrator',
+                   'password': null,
+                   'remote-app': '',
+                   'protocol': 'rdp',
+                   'app-name': 'app1',
+                   'machine-id': machine.id,
+                   'machine-type': 'dummy',
+                   'machine-driver': 'dummy'
+                 }
+               });
+               expect(res.body.data).to.include({
+                 'type': 'apps',
+                 'id': app2,
+                 'attributes': {
+                   'hostname': '127.0.0.1',
+                   'port': 3389,
+                   'username': 'Administrator',
+                   'password': null,
+                   'remote-app': '',
+                   'protocol': 'rdp',
+                   'app-name': 'app2',
+                   'machine-id': machine.id,
+                   'machine-type': 'dummy',
+                   'machine-driver': 'dummy'
+                 }
+               });
+             })
+             .then(() => {
+               return done();
+             });
+         });
+     });
+   });
+ };
