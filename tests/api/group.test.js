@@ -452,7 +452,7 @@ module.exports = function() {
           .send({
             'data': {
               'attributes': {
-                'name': 'Group to add application to'
+                'name': 'Group to add image to'
               },
               'type': 'groups'
             }
@@ -473,7 +473,7 @@ module.exports = function() {
                     'data': {
                       'id': groupID,
                       'attributes': {
-                        'name': 'Group to add application to'
+                        'name': 'Group to add image to'
                       },
                       'relationships': {
                         'images': {
@@ -517,7 +517,7 @@ module.exports = function() {
           .send({
             'data': {
               'attributes': {
-                'name': 'Group to remove application from'
+                'name': 'Group to remove image access from'
               },
               'type': 'groups'
             }
@@ -539,7 +539,7 @@ module.exports = function() {
                     'data': {
                       'id': groupID,
                       'attributes': {
-                        'name': 'Group to remove application from'
+                        'name': 'Group to remove image access from'
                       },
                       'relationships': {
                         'images': {
