@@ -47,10 +47,11 @@ module.exports = {
                  "app".id,
                  "app".alias,
                  "app"."displayName",
-                 "app"."filePath"
+                 "app"."filePath",
+                 "app"."image"
                  FROM "app"
-                 LEFT JOIN "appgroup" on appgroup.app = app.id
-                 LEFT JOIN "group" on appgroup.group = "group".id
+                 LEFT JOIN "imagegroup" on imagegroup.image = app.image
+                 LEFT JOIN "group" on imagegroup.group = "group".id
                  LEFT JOIN "usergroup" on usergroup.group = "group".id
                  WHERE usergroup.user = $1::varchar OR $2::boolean = true`,
         values: [
@@ -73,6 +74,7 @@ module.exports = {
       App.findOne({
         id: req.allParams().id
       })
+        .populate('image')
         .then((app) => {
           return res.ok(app);
         });
