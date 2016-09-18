@@ -95,10 +95,30 @@ module.exports = {
 
     this._getApps(req.user)
       .then((apps) => {
-        return res.ok(apps.rows);
+        let appIds = _.map(apps.rows, 'id');
+
+        App.find(appIds)
+          .populate('image')
+          .then((apps) => {
+            return res.ok(apps);
+          });
       })
       .catch((err) => {
         return res.negotiate(err);
+      });
+  },
+
+  create(req, res) {
+
+    var values = JsonApiService.deserialize(req.body.data.attributes);
+
+    MachineService.getDefaultImage()
+      .then((defaultImage) => {
+
+        values.image = defaultImage.id;
+        App.create(values)
+          .then(res.ok)
+          .catch(res.negotiate);
       });
   },
 
