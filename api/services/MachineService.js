@@ -115,7 +115,7 @@ function initialize() {
 
             return _driver.initialize()
               .then(() => {
-                _updateMachinesPool();
+                updateMachinesPool();
                 return null;
               });
           });
@@ -172,7 +172,7 @@ function getMachineForUser(user) {
                 }
 
                 if (res.rows.length) {
-                  _updateMachinesPool();
+                  updateMachinesPool();
                   _createBrokerLog(res.rows[0], 'Assigned')
                     .then(() => {
                       return resolve(Machine.findOne({
@@ -310,11 +310,11 @@ function _terminateMachine(machine) {
  * variable:
  *  - machinePoolSize: the number of available machine to keep in the pool
  *
- * @method _updateMachinesPool
+ * @method updateMachinesPool
  * @private
  * @return {Promise}
  */
-function _updateMachinesPool() {
+function updateMachinesPool() {
 
   return assert(!!_driver, driverNotInitializedError)
     .then(() => {
@@ -538,5 +538,5 @@ function getPassword(machine) {
 
 module.exports = {
   initialize, getMachineForUser, driverName, sessionOpen, sessionEnded,
-  machines, createImage, refresh, getPassword
+  machines, createImage, refresh, getPassword, updateMachinesPool
 };
