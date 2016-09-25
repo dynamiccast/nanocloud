@@ -325,22 +325,24 @@ function updateMachinesPool() {
           text: 'SELECT image, COUNT(image) FROM machine WHERE "machine"."status" = \'running\' AND "machine"."user" IS NULL GROUP BY "machine"."image"',
           values: []
         }),
-        defaultImage: Image.findOne({
+        images: Image.find({
           deleted: false
         })
       })
-        .then(({config, machineCount, defaultImage}) => {
+        .then(({config, machineCount, images}) => {
 
-          // TODO determine the number of machine per image to boot
-          console.log(JSON.stringify(machineCount.rows));
-          let machineToCreate = config.machinePoolSize - machineCount;
-          let machines = _.times(machineToCreate, () => _createMachine(defaultImage));
+          images.forEach((image) => {
+            let machineCreated = _.find(machineCount.rows, (m) => m.image === image.id) || {count: 0};
+            let machineToCreate = config.machinePoolSize - machineCreated.count;
+            let machines = _.times(machineToCreate, () => _createMachine(image));
 
-          if (machineToCreate > 0) {
-            _createBrokerLog({
-              type: _driver.name()
-            }, `Update machine pool from ${machineCount} to ${machineCount + machineToCreate} (+${machineToCreate})`);
-          }
+            if (machineToCreate > 0) {
+              _createBrokerLog({
+                type: _driver.name()
+              }, `Update machine pool for image ${image.name} from ${machineCreated.count} to ${machineCreated.count + machineToCreate} (+${machineToCreate})`);
+            }
+          });
+
           return Promise.all(machines);
         });
     })
@@ -486,6 +488,7 @@ function createImage(image) {
       return Image.create(newImage);
     })
     .then((newImage) => {
+      updateMachinesPool();
       return Promise.resolve(newImage);
     });
 }
