@@ -68,6 +68,112 @@ module.exports = {
     });
   },
 
+  _mountStorage(machine, user) {
+    return StorageService.findOrCreate(user)
+      .then((storage) => {
+        return PlazaService.exec(machine.ip, machine.plazaport, {
+          command: [
+            `C:\\Windows\\System32\\net.exe`,
+            'use',
+            'z:',
+            `\\\\${storage.hostname}\\${storage.username}`,
+            `/user:${storage.username}`,
+            storage.password
+          ],
+          wait: true,
+          hideWindow: true,
+          username: machine.username
+        })
+          .catch(() => {
+            // User storage is probably already mounted
+            // When an image is published, sometimes storage does not work again
+            // Let's delete the currupted storage and recreate it
+            // Let's ignore the error silently
+
+            return PlazaService.exec(machine.ip, machine.plazaport, {
+              command: [
+                `C:\\Windows\\System32\\net.exe`,
+                'use',
+                'z:',
+                `/DELETE`,
+                `/YES`
+              ],
+              wait: true,
+              hideWindow: true,
+              username: machine.username
+            })
+              .then(() => {
+                return PlazaService.exec(machine.ip, machine.plazaport, {
+                  command: [
+                    `C:\\Windows\\System32\\net.exe`,
+                    'use',
+                    'z:',
+                    `\\\\${storage.hostname}\\${storage.username}`,
+                    `/user:${storage.username}`,
+                    storage.password
+                  ],
+                  wait: true,
+                  hideWindow: true,
+                  username: machine.username
+                });
+              })
+              .then(() => {
+                return Promise.resolve();
+              });
+          });
+      })
+      .then(() => {
+        return PlazaService.exec(machine.ip, machine.plazaport, {
+          command: [
+            `C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe`,
+            '-Command',
+            '-'
+          ],
+          wait: true,
+          hideWindow: true,
+          username: machine.username,
+          stdin: '$a = New-Object -ComObject shell.application;$a.NameSpace( "Z:\" ).self.name = "Personal Storage"'
+        });
+      })
+      .then(() => {
+        if (user.team) {
+          Team.findOne(user.team)
+            .then((team) => {
+              return ConfigService.get('teamStorageAddress')
+                .then((config) => {
+                  let command = [
+                    `C:\\Windows\\System32\\net.exe`,
+                    'use',
+                    'y:',
+                    `\\\\${config.teamStorageAddress}\\${team.username}`,
+                    `/user:${team.username}`,
+                    team.password
+                  ];
+                  return PlazaService.exec(machine.ip, machine.plazaport, {
+                    command: command,
+                    wait: true,
+                    hideWindow: true,
+                    username: machine.username
+                  });
+                });
+            })
+            .then(() => {
+              return PlazaService.exec(machine.ip, machine.plazaport, {
+                command: [
+                  `C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe`,
+                  '-Command',
+                  '-'
+                ],
+                wait: true,
+                hideWindow: true,
+                username: machine.username,
+                stdin: '$a = New-Object -ComObject shell.application;$a.NameSpace( "Y:\" ).self.name = "Team"'
+              });
+            });
+        }
+      });
+  },
+
   findOne(req, res) {
     if (req.user.isAdmin) {
       App.findOne({
@@ -122,109 +228,7 @@ module.exports = {
                 username: machine.username
               })
                 .then(() => {
-                  return StorageService.findOrCreate(req.user);
-                })
-                .then((storage) => {
-                  return PlazaService.exec(machine.ip, machine.plazaport, {
-                    command: [
-                      `C:\\Windows\\System32\\net.exe`,
-                      'use',
-                      'z:',
-                      `\\\\${storage.hostname}\\${storage.username}`,
-                      `/user:${storage.username}`,
-                      storage.password
-                    ],
-                    wait: true,
-                    hideWindow: true,
-                    username: machine.username
-                  })
-                    .catch(() => {
-                      // User storage is probably already mounted
-                      // When an image is published, sometimes storage does not work again
-                      // Let's delete the currupted storage and recreate it
-                      // Let's ignore the error silently
-
-                      return PlazaService.exec(machine.ip, machine.plazaport, {
-                        command: [
-                          `C:\\Windows\\System32\\net.exe`,
-                          'use',
-                          'z:',
-                          `/DELETE`,
-                          `/YES`
-                        ],
-                        wait: true,
-                        hideWindow: true,
-                        username: machine.username
-                      })
-                        .then(() => {
-                          return PlazaService.exec(machine.ip, machine.plazaport, {
-                            command: [
-                              `C:\\Windows\\System32\\net.exe`,
-                              'use',
-                              'z:',
-                              `\\\\${storage.hostname}\\${storage.username}`,
-                              `/user:${storage.username}`,
-                              storage.password
-                            ],
-                            wait: true,
-                            hideWindow: true,
-                            username: machine.username
-                          });
-                        })
-                        .then(() => {
-                          return Promise.resolve();
-                        });
-                    });
-                })
-                .then(() => {
-                  return PlazaService.exec(machine.ip, machine.plazaport, {
-                    command: [
-                      `C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe`,
-                      '-Command',
-                      '-'
-                    ],
-                    wait: true,
-                    hideWindow: true,
-                    username: machine.username,
-                    stdin: '$a = New-Object -ComObject shell.application;$a.NameSpace( "Z:\" ).self.name = "Personal Storage"'
-                  });
-                })
-                .then(() => {
-                  if (req.user.team) {
-                    Team.findOne(req.user.team)
-                      .then((team) => {
-                        return ConfigService.get('teamStorageAddress')
-                          .then((config) => {
-                            let command = [
-                              `C:\\Windows\\System32\\net.exe`,
-                              'use',
-                              'y:',
-                              `\\\\${config.teamStorageAddress}\\${team.username}`,
-                              `/user:${team.username}`,
-                              team.password
-                            ];
-                            return PlazaService.exec(machine.ip, machine.plazaport, {
-                              command: command,
-                              wait: true,
-                              hideWindow: true,
-                              username: machine.username
-                            });
-                          });
-                      })
-                      .then(() => {
-                        return PlazaService.exec(machine.ip, machine.plazaport, {
-                          command: [
-                            `C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe`,
-                            '-Command',
-                            '-'
-                          ],
-                          wait: true,
-                          hideWindow: true,
-                          username: machine.username,
-                          stdin: '$a = New-Object -ComObject shell.application;$a.NameSpace( "Y:\" ).self.name = "Team"'
-                        });
-                      });
-                  }
+                  setTimeout(() => this._mountStorage(machine, req.user), 5000);
                 });
             });
         }
