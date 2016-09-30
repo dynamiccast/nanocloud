@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+var executed = false;
 var port = chrome.runtime.connect();
 
 // Listen messages from nanocloud's frontend
@@ -33,7 +34,8 @@ window.addEventListener('message', function(event) {
 }, false);
 
 // Send a message when user is on focus
-if (navigator.userAgent.indexOf('Chrome') !== -1) {
+if (executed === false && navigator.userAgent.indexOf('Chrome') !== -1) {
+  executed = true;
   window.onfocus = function() {
     window.postMessage({type: 'onfocus'}, '*');
   };
