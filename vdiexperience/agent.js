@@ -49,7 +49,9 @@ port.onMessage.addListener(function(msg) {
     var event = document.createEvent('HTMLEvents');
     event.initEvent('change', true, false);
     var textarea = document.getElementById('VDIClipboard');
-    textarea.value = msg.value;
-    textarea.dispatchEvent(event);
+    if (textarea) {
+      textarea.value = msg.value;
+      textarea.dispatchEvent(event);
+    }
   }
 });
