@@ -23,11 +23,11 @@
 var executed = false;
 
 // Listen when a webrequest in *://*/api/apps/* is completed
-chrome.webRequest.onCompleted.addListener(function(res) {
+chrome.webNavigation.onCompleted.addListener(function(res) {
 
+  // Inject agent.js in the page
   if (executed === false) {
     executed = true;
-    // Inject agent.js in the page
     chrome.tabs.executeScript(res.tabId, {
       file: 'agent.js'
     });
@@ -57,4 +57,4 @@ chrome.webRequest.onCompleted.addListener(function(res) {
     });
   }
 },
-{urls: ['*://*/api/apps/*']});
+{urlMatches: ['http*://*/#/vdi*']});

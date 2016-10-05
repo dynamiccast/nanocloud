@@ -30,6 +30,8 @@ window.addEventListener('message', function(event) {
     port.postMessage(event.data);
   } else if (event.data.type === 'onfocus') {
     port.postMessage(event.data);
+  } else if (event.data.type === 'check') {
+    window.postMessage({type: 'returnCheck', value: 'yes'}, '*');
   }
 }, false);
 

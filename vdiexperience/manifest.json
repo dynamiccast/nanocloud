@@ -6,16 +6,9 @@
   "version": "0.1",
 
   "background": {
-    "scripts": ["background.js"]
+    "scripts": ["background.js"],
+    "persistent": false
   },
-
-  "content_scripts": [
-    {
-      "matches": ["*://*/#/apps"],
-      "js": ["agent.js"],
-      "all_frames": true
-    }
-  ],
 
   "icons": {
     "48": "icon48.png",
@@ -23,9 +16,9 @@
   },
 
   "permissions": [
-    "webRequest",
+    "webNavigation",
     "clipboardWrite",
     "clipboardRead",
-    "*://*/#/apps"
+    "*://*/#/vdi*"
   ]
 }

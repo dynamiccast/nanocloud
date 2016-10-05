@@ -26,6 +26,7 @@ import Ember from 'ember';
 
 export default Ember.Mixin.create({
   windowCollector: null,
+  showExtension: true,
   enabledWindow: Ember.computed('windowCollector', function() {
     let windowCollector = this.get('windowCollector');
     for (var i in windowCollector) {
@@ -72,9 +73,29 @@ export default Ember.Mixin.create({
     this.toggleProperty('windowCollector.onboardApp');
   },
 
+  checkExtension() {
+    console.log('check Extension');
+    if (navigator.userAgent.indexOf('Chrome') !== -1) {
+      window.postMessage({type: 'check'}, '*');
+    console.log('send');
+
+      window.addEventListener('message', (msg) => {
+    console.log('listen');
+        if (msg.data.type === 'returnCheck' && msg.data.value === 'yes') {
+          this.set('showExtension', false);
+          console.log('extension deja installe');
+        }
+      });
+    } else {
+      this.set('showExtension', false);
+    }
+  },
+
   actions: {
+
     toggleWindow(item) {
       this.toggleWindow(item);
+      this.checkExtension();
     },
     closeAllWindow() {
       this.closeAllWindow();
